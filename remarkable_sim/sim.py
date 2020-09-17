@@ -277,6 +277,9 @@ class GUI(object):
 
 
 if __name__ == '__main__':
+    main()
+
+def main():
     root = tk.Tk()
     gui = GUI(root)
 
