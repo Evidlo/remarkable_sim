@@ -238,10 +238,10 @@ class GUI(object):
 
     # screen initial press
     def screen_press(self, event):
-        if self.input == 'Stylus':
+        if self.input.get() == 'Stylus':
             write_evdev(self.fifo_stylus, *codes_stylus['abs_distance'], 0)
 
-        if self.input == 'Touch':
+        if self.input.get() == 'Touch':
             pass
 
         self.screen_motion(event)
@@ -269,11 +269,11 @@ class GUI(object):
 
     # screen release
     def screen_release(self, event):
-        if self.input == 'Stylus':
+        if self.input.get() == 'Stylus':
             write_evdev(self.fifo_stylus, *codes_stylus['abs_distance'], 100)
             write_evdev(self.fifo_stylus, *code_sync)
 
-        if self.input == 'Touch':
+        if self.input.get() == 'Touch':
             pass
 
 
