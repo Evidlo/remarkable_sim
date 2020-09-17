@@ -44,8 +44,6 @@ def write_evdev(f, e_type, e_code, e_value):
         e_value (int): evdev event value
     """
 
-    print(f, e_type, e_code, e_value)
-
     t = time.time_ns()
     t_seconds = int(t / 1e9)
     t_microseconds = int(t / 1e3 % 1e6)

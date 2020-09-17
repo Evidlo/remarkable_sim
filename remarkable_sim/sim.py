@@ -196,10 +196,11 @@ class GUI(object):
 
     def load_screen(self):
         # FIXME: file is sometimes read before writing is finished
-        img = tk.PhotoImage(file=path_fb)
-        self.img_scaled = img.subsample(display_scale, display_scale)
-        self.screen.create_image(0, 0, image=self.img_scaled, anchor='nw')
-        self.root.after(screen_update_delay, self.load_screen)
+        if os.path.exists(path_fb):
+            img = tk.PhotoImage(file=path_fb)
+            self.img_scaled = img.subsample(display_scale, display_scale)
+            self.screen.create_image(0, 0, image=self.img_scaled, anchor='nw')
+            self.root.after(screen_update_delay, self.load_screen)
 
     # ----- Event Callbacks -----
 
