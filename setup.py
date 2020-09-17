@@ -16,7 +16,7 @@ setup(
     entry_points={
         'console_scripts': [
             'resim = remarkable_sim.sim:main',
-            'ph = remarkable_sim.sim:main'
+            'remarkable_sim = remarkable_sim.sim:main'
         ]
     },
     classifiers=[
