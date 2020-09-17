@@ -3,7 +3,7 @@ import os
 
 setup(
     name='remarkable-sim',
-    version='1.0.2',
+    version='1.0.4',
     packages=['remarkable_sim'],
     author="Evan Widloski",
     author_email="evan@evanw.org",
