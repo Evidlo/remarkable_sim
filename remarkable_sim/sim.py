@@ -8,7 +8,7 @@ import tkinter as tk
 from tkinter import ttk
 from remarkable_sim.evsim import (
     makefifo, write_evdev, codes_stylus, codes_touch, codes_button, code_sync,
-    stylus_max_x, stylus_max_y, touch_max_x, touch_max_y
+    stylus_max_x, stylus_max_y, touch_max_x, touch_max_y, affine_map
 )
 
 logging.basicConfig(format='%(message)s')
@@ -153,11 +153,11 @@ class GUI(object):
         self.pressure = tk.Scale(self.f2, from_=0, to=4095, orient='horizontal')
         self.pressure.grid(row=1, column=1)
         tk.Label(self.f2, text='Stylus Tilt X').grid(row=2, column=0)
-        self.angle = tk.Scale(self.f2, from_=-6300, to=6300, orient='horizontal')
-        self.angle.grid(row=2, column=1)
+        self.tiltx = tk.Scale(self.f2, from_=-6300, to=6300, orient='horizontal')
+        self.tiltx.grid(row=2, column=1)
         tk.Label(self.f2, text='Stylus Tilt Y').grid(row=3, column=0)
-        self.angle = tk.Scale(self.f2, from_=-6300, to=6300, orient='horizontal')
-        self.angle.grid(row=3, column=1)
+        self.tilty = tk.Scale(self.f2, from_=-6300, to=6300, orient='horizontal')
+        self.tilty.grid(row=3, column=1)
 
         ttk.Separator(self.f2, orient='vertical').grid(row=0, column=2, rowspan=3, sticky='ns')
 
@@ -248,10 +248,10 @@ class GUI(object):
 
     # screen motion after press
     def screen_motion(self, event):
-        if self.input == 'Stylus':
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], self.pressure)
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_tiltx'], self.tiltx)
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilty'], self.tilty)
+        if self.input.get() == 'Stylus':
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], self.pressure.get())
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_x'], self.tiltx.get())
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_y'], self.tilty.get())
             write_evdev(
                 self.fifo_stylus,
                 *codes_stylus['abs_y'],
@@ -264,7 +264,7 @@ class GUI(object):
             )
             write_evdev(self.fifo_stylus, *code_sync)
 
-        if self.input == 'Touch':
+        if self.input.get() == 'Touch':
             pass
 
     # screen release
@@ -276,9 +276,6 @@ class GUI(object):
         if self.input == 'Touch':
             pass
 
-
-if __name__ == '__main__':
-    main()
 
 def main():
     root = tk.Tk()
@@ -292,3 +289,7 @@ def main():
     os.remove(path_fifo_stylus)
     os.remove(path_fifo_touch)
     os.remove(path_fifo_button)
+
+
+if __name__ == '__main__':
+    main()
