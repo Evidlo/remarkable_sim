@@ -41,8 +41,8 @@ codes resolved with python evdev
   - code 1 - abs_y - ypos - (0: left, 15725: right)
   - code 24 - abs_pressure - (0, 4095)
   - code 25 - abs_distance - distance between pen and surface - (0: lowered, ~100: raised)
-  - code 26 - abs_tilt_x - (-6300: pen flat pointing up, 6300: pen flat pointing down)
-  - code 27 - abs_tilt_y - (-6300: pen flat pointing right, 6300: pen flat pointing left
+  - code 26 - abs_tilt_x - (-6300: pen flat, pointing up, 6300: pen flat, pointing down)
+  - code 27 - abs_tilt_y - (-6300: pen flat, pointing right, 6300: pen flat, pointing left
 
 ## event1 - Touch
 - type 0 - ev_sync
