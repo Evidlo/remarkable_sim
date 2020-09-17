@@ -6,7 +6,7 @@ import os
 import stat
 import tkinter as tk
 from tkinter import ttk
-from evsim import (
+from remarkable_sim.evsim import (
     makefifo, write_evdev, codes_stylus, codes_touch, codes_button, code_sync,
     stylus_max_x, stylus_max_y, touch_max_x, touch_max_y
 )
