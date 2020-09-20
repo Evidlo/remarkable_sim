@@ -6,10 +6,11 @@ import os
 import stat
 import tkinter as tk
 from tkinter import ttk
-from remarkable_sim.evsim import (
+from .evsim import (
     makefifo, write_evdev, codes_stylus, codes_touch, codes_button, code_sync,
     stylus_max_x, stylus_max_y, touch_max_x, touch_max_y, affine_map
 )
+from PIL import Image, ImageTk
 
 logging.basicConfig(format='%(message)s')
 log = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ path_fifo_stylus = 'event0'
 path_fifo_touch = 'event1'
 path_fifo_button = 'event2'
 # screen buffer
-path_fb = 'fb.pgm'
+path_fb = '/home/nhahn/prog/rmkit/fb.png'
 
 # period between reading framebuffer
 screen_update_delay = 100 # (ms)
@@ -39,6 +40,7 @@ def round_rectangle(canvas, x1, y1, x2, y2, r=25, **kwargs):
 
 class GUI(object):
     def __init__(self, root):
+        print("CUR DIR", os.getcwd())
         self.root = root
         root.title("reMarkable simulator")
 
@@ -197,10 +199,12 @@ class GUI(object):
     def load_screen(self):
         # FIXME: file is sometimes read before writing is finished
         if os.path.exists(path_fb):
-            img = tk.PhotoImage(file=path_fb)
+            img = tk.PhotoImage(ImageTk.PhotoImage(Image.open(path_fb)))
             self.img_scaled = img.subsample(display_scale, display_scale)
             self.screen.create_image(0, 0, image=self.img_scaled, anchor='nw')
             self.root.after(screen_update_delay, self.load_screen)
+        else:
+            print(path_fb + " not found")
 
     # ----- Event Callbacks -----
 
@@ -278,6 +282,7 @@ class GUI(object):
 
 
 def main():
+    print("MAIN")
     root = tk.Tk()
     gui = GUI(root)
 
