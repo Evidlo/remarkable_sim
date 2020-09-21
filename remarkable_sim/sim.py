@@ -10,10 +10,11 @@ from .evsim import (
     makefifo, write_evdev, codes_stylus, codes_touch, codes_button, code_sync,
     stylus_max_x, stylus_max_y, touch_max_x, touch_max_y, affine_map
 )
-from PIL import Image, ImageTk
 
 logging.basicConfig(format='%(message)s')
 log = logging.getLogger(__name__)
+
+os.chdir(os.getenv("DIR", "."))
 
 display_scale = 3
 screen_width = 1404 // display_scale
@@ -24,7 +25,7 @@ path_fifo_stylus = 'event0'
 path_fifo_touch = 'event1'
 path_fifo_button = 'event2'
 # screen buffer
-path_fb = '/home/nhahn/prog/rmkit/fb.png'
+path_fb = 'fb.png'
 
 # period between reading framebuffer
 screen_update_delay = 100 # (ms)
@@ -153,12 +154,15 @@ class GUI(object):
 
         tk.Label(self.f2, text='Stylus Pressure').grid(row=1, column=0)
         self.pressure = tk.Scale(self.f2, from_=0, to=4095, orient='horizontal')
+        self.pressure.set(4000)
         self.pressure.grid(row=1, column=1)
         tk.Label(self.f2, text='Stylus Tilt X').grid(row=2, column=0)
         self.tiltx = tk.Scale(self.f2, from_=-6300, to=6300, orient='horizontal')
         self.tiltx.grid(row=2, column=1)
+        self.tiltx.set(1000)
         tk.Label(self.f2, text='Stylus Tilt Y').grid(row=3, column=0)
         self.tilty = tk.Scale(self.f2, from_=-6300, to=6300, orient='horizontal')
+        self.tilty.set(1000)
         self.tilty.grid(row=3, column=1)
 
         ttk.Separator(self.f2, orient='vertical').grid(row=0, column=2, rowspan=3, sticky='ns')
@@ -199,7 +203,13 @@ class GUI(object):
     def load_screen(self):
         # FIXME: file is sometimes read before writing is finished
         if os.path.exists(path_fb):
-            img = tk.PhotoImage(ImageTk.PhotoImage(Image.open(path_fb)))
+            try:
+                img = Image.open(path_fb)
+            except KeyboardInterrupt:
+                import sys
+                sys.exit(0)
+            except:
+                return
             self.img_scaled = img.subsample(display_scale, display_scale)
             self.screen.create_image(0, 0, image=self.img_scaled, anchor='nw')
             self.root.after(screen_update_delay, self.load_screen)
@@ -243,7 +253,12 @@ class GUI(object):
     # screen initial press
     def screen_press(self, event):
         if self.input.get() == 'Stylus':
+            write_evdev(self.fifo_stylus, *codes_stylus['touch'], 1)
             write_evdev(self.fifo_stylus, *codes_stylus['abs_distance'], 0)
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], self.pressure.get())
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_x'], self.tiltx.get())
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_y'], self.tilty.get())
+            write_evdev(self.fifo_stylus, *code_sync)
 
         if self.input.get() == 'Touch':
             pass
@@ -253,18 +268,15 @@ class GUI(object):
     # screen motion after press
     def screen_motion(self, event):
         if self.input.get() == 'Stylus':
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], self.pressure.get())
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_x'], self.tiltx.get())
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_y'], self.tilty.get())
-            write_evdev(
-                self.fifo_stylus,
-                *codes_stylus['abs_y'],
-                affine_map(event.x, 0, screen_width, 0, stylus_max_y)
-            )
             write_evdev(
                 self.fifo_stylus,
                 *codes_stylus['abs_x'],
-                affine_map(event.y, 0, screen_width, stylus_max_x, 0)
+                affine_map(float(event.y), 0, screen_height, 0, stylus_max_y)
+            )
+            write_evdev(
+                self.fifo_stylus,
+                *codes_stylus['abs_y'],
+                stylus_max_y - affine_map(float(event.x), 0, screen_width, 0, stylus_max_x)
             )
             write_evdev(self.fifo_stylus, *code_sync)
 
@@ -275,6 +287,8 @@ class GUI(object):
     def screen_release(self, event):
         if self.input.get() == 'Stylus':
             write_evdev(self.fifo_stylus, *codes_stylus['abs_distance'], 100)
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], 0)
+            write_evdev(self.fifo_stylus, *codes_stylus['touch'], 0)
             write_evdev(self.fifo_stylus, *code_sync)
 
         if self.input.get() == 'Touch':

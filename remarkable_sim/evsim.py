@@ -52,7 +52,7 @@ def write_evdev(f, e_type, e_code, e_value):
     os.write(
         f,
         struct.pack(
-            '2IHHi',
+            'ILHHi',
             t_seconds,
             t_microseconds,
             e_type,
