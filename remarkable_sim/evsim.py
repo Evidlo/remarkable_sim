@@ -16,7 +16,7 @@ def affine_map(x, a0, a1, b0, b1):
         int: mapped coordinate
     """
 
-    return int(((x - a0) / a1) * b1 + b0)
+    return int(((x - a0) / a1) * (b1 - b0) + b0)
 
 def makefifo(path):
     """Make a fifo, delete existing fifo
