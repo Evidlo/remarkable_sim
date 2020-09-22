@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import stat
+import sys
 import tkinter as tk
 from tkinter import ttk
 from remarkable_sim.evsim import (
@@ -23,7 +24,7 @@ path_fifo_stylus = 'event0'
 path_fifo_touch = 'event1'
 path_fifo_button = 'event2'
 # screen buffer
-path_fb = 'fb.pgm'
+path_fb = 'fb.pnm'
 
 # period between reading framebuffer
 screen_update_delay = 100 # (ms)
@@ -151,6 +152,7 @@ class GUI(object):
 
         tk.Label(self.f2, text='Stylus Pressure').grid(row=1, column=0)
         self.pressure = tk.Scale(self.f2, from_=0, to=4095, orient='horizontal')
+        self.pressure.set(4000)
         self.pressure.grid(row=1, column=1)
         tk.Label(self.f2, text='Stylus Tilt X').grid(row=2, column=0)
         self.tiltx = tk.Scale(self.f2, from_=-6300, to=6300, orient='horizontal')
@@ -197,7 +199,13 @@ class GUI(object):
     def load_screen(self):
         # FIXME: file is sometimes read before writing is finished
         if os.path.exists(path_fb):
-            img = tk.PhotoImage(file=path_fb)
+            try:
+                img = tk.PhotoImage(file=path_fb)
+            except tk.TclError:
+                return
+            except KeyboardInterrupt:
+                sys.exit(0)
+
             self.img_scaled = img.subsample(display_scale, display_scale)
             self.screen.create_image(0, 0, image=self.img_scaled, anchor='nw')
             self.root.after(screen_update_delay, self.load_screen)
@@ -239,19 +247,18 @@ class GUI(object):
     # screen initial press
     def screen_press(self, event):
         if self.input.get() == 'Stylus':
+            write_evdev(self.fifo_stylus, *codes_stylus['touch'], 1)
             write_evdev(self.fifo_stylus, *codes_stylus['abs_distance'], 0)
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], self.pressure.get())
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_x'], self.tiltx.get())
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_y'], self.tilty.get())
 
         if self.input.get() == 'Touch':
             pass
 
-        self.screen_motion(event)
-
     # screen motion after press
     def screen_motion(self, event):
         if self.input.get() == 'Stylus':
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], self.pressure.get())
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_x'], self.tiltx.get())
-            write_evdev(self.fifo_stylus, *codes_stylus['abs_tilt_y'], self.tilty.get())
             write_evdev(
                 self.fifo_stylus,
                 *codes_stylus['abs_y'],
@@ -260,7 +267,7 @@ class GUI(object):
             write_evdev(
                 self.fifo_stylus,
                 *codes_stylus['abs_x'],
-                affine_map(event.y, 0, screen_width, stylus_max_x, 0)
+                affine_map(event.y, 0, screen_height, stylus_max_x, 0)
             )
             write_evdev(self.fifo_stylus, *code_sync)
 
@@ -272,6 +279,8 @@ class GUI(object):
         if self.input.get() == 'Stylus':
             write_evdev(self.fifo_stylus, *codes_stylus['abs_distance'], 100)
             write_evdev(self.fifo_stylus, *code_sync)
+            write_evdev(self.fifo_stylus, *codes_stylus['touch'], 1)
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], 0)
 
         if self.input.get() == 'Touch':
             pass
