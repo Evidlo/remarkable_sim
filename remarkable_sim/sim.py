@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import stat
+import sys
 import tkinter as tk
 from tkinter import ttk
 from .evsim import (
@@ -25,7 +26,7 @@ path_fifo_stylus = 'event0'
 path_fifo_touch = 'event1'
 path_fifo_button = 'event2'
 # screen buffer
-path_fb = 'fb.png'
+path_fb = 'fb.pnm'
 
 # period between reading framebuffer
 screen_update_delay = 100 # (ms)
@@ -204,12 +205,12 @@ class GUI(object):
         # FIXME: file is sometimes read before writing is finished
         if os.path.exists(path_fb):
             try:
-                img = Image.open(path_fb)
-            except KeyboardInterrupt:
-                import sys
-                sys.exit(0)
-            except:
+                img = tk.PhotoImage(file=path_fb)
+            except tk.TclError:
                 return
+            except KeyboardInterrupt:
+                sys.exit(0)
+
             self.img_scaled = img.subsample(display_scale, display_scale)
             self.screen.create_image(0, 0, image=self.img_scaled, anchor='nw')
             self.root.after(screen_update_delay, self.load_screen)
@@ -263,8 +264,6 @@ class GUI(object):
         if self.input.get() == 'Touch':
             pass
 
-        self.screen_motion(event)
-
     # screen motion after press
     def screen_motion(self, event):
         if self.input.get() == 'Stylus':
@@ -275,8 +274,8 @@ class GUI(object):
             )
             write_evdev(
                 self.fifo_stylus,
-                *codes_stylus['abs_y'],
-                stylus_max_y - affine_map(float(event.x), 0, screen_width, 0, stylus_max_x)
+                *codes_stylus['abs_x'],
+                affine_map(event.y, 0, screen_height, stylus_max_x, 0)
             )
             write_evdev(self.fifo_stylus, *code_sync)
 
@@ -290,6 +289,8 @@ class GUI(object):
             write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], 0)
             write_evdev(self.fifo_stylus, *codes_stylus['touch'], 0)
             write_evdev(self.fifo_stylus, *code_sync)
+            write_evdev(self.fifo_stylus, *codes_stylus['touch'], 1)
+            write_evdev(self.fifo_stylus, *codes_stylus['abs_pressure'], 0)
 
         if self.input.get() == 'Touch':
             pass
